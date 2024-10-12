@@ -3,6 +3,10 @@ from datetime import datetime
 import uuid
 import streamlit as st
 import os
+
+DATA_DIR = 'data'
+PROJECTS_FILE = os.path.join(DATA_DIR, 'projects.json')
+UPLOADS_DIR = os.path.join(DATA_DIR, 'uploads')
 def get_projects():
     try:
         with open('data/projects.json', 'r') as f:
@@ -18,19 +22,22 @@ def save_projects(projects):
     os.makedirs('data', exist_ok=True)
     with open('data/projects.json', 'w') as f:
         json.dump(projects, f)
-def add_project(name, description):
-    projects = get_projects()
+def add_project(name, description, team, documents):
     new_project = {
-        'id': str(uuid.uuid4()),  # Generate a unique ID
+        'id': str(uuid.uuid4()),
         'name': name,
         'description': description,
-        'team': 'New',
-        'agents': 'New',
-        'created_at': datetime.now().isoformat()
+        'team': team,
+        'status': 'New',
+        'created_at': datetime.now().isoformat(),
+        'updated_at': datetime.now().isoformat(),
+        'documents': [save_uploaded_file(doc) for doc in documents] if documents else []
     }
+    projects = get_projects()
     projects.append(new_project)
     save_projects(projects)
     return new_project
+
 def get_project_by_id(project_id):
     projects = get_projects()
     for project in projects:
@@ -89,3 +96,19 @@ def show_project_details(project):
         st.session_state.selected_project = None
         st.session_state.show_details = False
         st.rerun()
+
+
+def save_uploaded_file(file):
+    os.makedirs(UPLOADS_DIR, exist_ok=True)
+    file_id = str(uuid.uuid4())
+    file_extension = os.path.splitext(file.name)[1]
+    file_path = os.path.join(UPLOADS_DIR, f"{file_id}{file_extension}")
+    with open(file_path, "wb") as f:
+        f.write(file.getbuffer())
+    return {
+        'id': file_id,
+        'name': file.name,
+        'path': file_path,
+        'type': file.type,
+        'size': file.size
+    }

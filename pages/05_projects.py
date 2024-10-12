@@ -22,10 +22,6 @@ with main_col:
     project_cols = st.columns(3)
     for i, project in enumerate(st.session_state.projects):
         with project_cols[i % 3]:
-            # if ProjectCard(project):
-            #     st.session_state.selected_project = project
-            #     st.session_state.show_details = True
-            #     st.rerun()
             if st.button(f"{project['name']}\n{project['team']}\n{project['description'][:20]}...", key=f"project_{project['id']}"):
                 st.session_state.selected_project_id = project['id']
                 st.switch_page("pages/06_project_details.py")
@@ -40,15 +36,18 @@ with side_panel:
         new_name = st.text_input("Name", key="new_name")
         new_description = st.text_area("Description", key="new_description")
         new_team = st.text_input("Team", key="new_team")
+        
+        # Add file uploader for documents
+        new_documents = st.file_uploader("Upload Documents", accept_multiple_files=True, key="new_documents")
 
         if st.button("Add Project"):
             if new_name and new_description:
-                new_project = add_project(new_name, new_description)
+                new_project = add_project(new_name, new_description, new_team, new_documents)
                 st.session_state.projects.append(new_project)
                 save_projects(st.session_state.projects)
                 st.success(f"Project '{new_name}' added successfully!")
                 # Clear the form by resetting the session state
-                for key in ['new_name', 'new_description', 'new_team']:
+                for key in ['new_name', 'new_description', 'new_team', 'new_documents']:
                     if key in st.session_state:
                         del st.session_state[key]
                 st.rerun()

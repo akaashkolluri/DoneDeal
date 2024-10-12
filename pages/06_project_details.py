@@ -1,7 +1,9 @@
 import streamlit as st
 import datetime
 from streamlit_extras.stylable_container import stylable_container
-from utils.database import get_project_by_id, update_project
+from utils.database import get_project_by_id, update_project, remove_document, get_document_content
+import os
+import base64
 
 def show_project_details_page():
     st.title("Project Details")
@@ -38,15 +40,41 @@ def show_project_details_page():
         # Project name
         new_name = st.text_input("Project Name", value=project['name'])
         
-        # Project description
+        # Project description (now editable)
         new_description = st.text_area("Project Description", value=project['description'])
         
         # Project team
         new_team = st.text_input("Project Team", value=project.get('team', 'Not specified'))
         
+        # Display current documents
+        st.subheader("Current Documents")
+        for doc in project.get('documents', []):
+            col1, col2, col3 = st.columns([2, 1, 1])
+            with col1:
+                st.write(doc['name'])
+            with col2:
+                if st.button("Download", key=f"download_{doc['id']}"):
+                    file_content = get_document_content(doc['path'])
+                    st.download_button(
+                        label="Click to Download",
+                        data=base64.b64decode(file_content),
+                        file_name=doc['name'],
+                        mime=doc['type']
+                    )
+            with col3:
+                if st.button("Remove", key=f"remove_{doc['id']}"):
+                    if remove_document(project_id, doc['id']):
+                        st.success(f"Document {doc['name']} removed.")
+                        st.rerun()
+                    else:
+                        st.error("Failed to remove document.")
+
+        # Add new documents
+        new_documents = st.file_uploader("Add New Documents", accept_multiple_files=True)
+
         # Save changes button
         if st.button("Save Changes"):
-            updated_project = update_project(project_id, new_name, new_description, project.get('status', 'New'), new_team)
+            updated_project = update_project(project_id, new_name, new_description, project.get('status', 'New'), new_team, new_documents)
             if updated_project:
                 st.success("Project updated successfully!")
                 st.rerun()
