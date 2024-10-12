@@ -16,14 +16,46 @@ main_col, side_panel = st.columns([2, 1])
 
 with main_col:
     st.title("Agents")
-    # Display agents in a grid
-    agent_cols = st.columns(3)
-    for i, agent in enumerate(st.session_state.agents):
-        with agent_cols[i % 3]:
-            if AgentCard(agent):
-                st.session_state.selected_agent = agent
-                st.session_state.show_details = True
-                st.rerun()
+
+    # Create two columns for the filters
+    filter_col1, filter_col2 = st.columns(2)
+
+    with filter_col1:
+        # Add a dropdown to filter agents by allegiance
+        allegiance_filter = st.selectbox(
+            "Filter by Allegiance",
+            ["All", "Your Side", "Opposing Side", "Neutral"],
+            key="allegiance_filter"
+        )
+
+    with filter_col2:
+        # Add a dropdown to filter agents by type
+        agent_type_filter = st.selectbox(
+            "Filter by Agent Type",
+            ["All", "in-house counsel", "opposing counsel", "corporate plaintiff", "individual plaintiff", "judge"],
+            key="agent_type_filter"
+        )
+
+    # Filter agents based on the selected allegiance and agent type
+    filtered_agents = st.session_state.agents
+
+    if allegiance_filter != "All":
+        filtered_agents = [agent for agent in filtered_agents if agent['allegiance'] == allegiance_filter]
+
+    if agent_type_filter != "All":
+        filtered_agents = [agent for agent in filtered_agents if agent['type'] == agent_type_filter]
+
+    # Display filtered agents in a grid
+    if filtered_agents:
+        agent_cols = st.columns(3)
+        for i, agent in enumerate(filtered_agents):
+            with agent_cols[i % 3]:
+                if AgentCard(agent):
+                    st.session_state.selected_agent = agent
+                    st.session_state.show_details = True
+                    st.rerun()
+    else:
+        st.write("No agents match the selected filters.")
 
 # Side panel for Add Agent form and Edit Agent details
 with side_panel:

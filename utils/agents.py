@@ -65,12 +65,72 @@ def delete_agent(agent_id):
     return False
 
 def AgentCard(agent):
+    # Create custom CSS for the button
+    if agent['allegiance'] == "your side":
+        custom_css = f"""
+        <style>
+        div[data-testid="stButton"] > button#agent-button-{agent['id']} {{
+            primaryColor: green;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+        }}
+        </style>
+        """
+    elif agent['allegiance'] == "against you":
+        custom_css = f"""
+        <style>
+        div[data-testid="stButton"] > button#agent-button-{agent['id']} {{
+            primaryColor: red;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+        }}
+        </style>
+        """
+    else: 
+        custom_css = f"""
+        <style>
+        div[data-testid="stButton"] > button#agent-button-{agent['id']} {{
+            primaryColor: red;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+        }}
+        </style>
+        """
+
+
+    # Inject the custom CSS
+    st.markdown(custom_css, unsafe_allow_html=True)
+
+    # Prepare the card content
     card_content = f"""
     {agent['pixelart']}
     {agent['name']}
     {agent['description'][:20] + "..." if len(agent['description']) > 20 else agent['description']}
     """
-    return st.button(card_content, key=f"agent_{agent['id']}")
+
+    # Return the button
+    return st.button(
+        card_content,
+        key=f"agent_{agent['id']}",
+        use_container_width=True,
+        # Add a unique ID to the button
+        args=({'id': f'agent-button-{agent["id"]}'})
+    )
 
 def show_agent_details(agent):
     st.title(f"{agent['name']} Details")
