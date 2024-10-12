@@ -36,13 +36,14 @@ def get_project_by_id(project_id):
             return project
     return None
 
-def update_project(project_id, name, description, status):
+def update_project(project_id, name, description, status, team):
     projects = get_projects()
     for project in projects:
         if project['id'] == project_id:
             project['name'] = name
             project['description'] = description
             project['status'] = status
+            project['team'] = team
             project['updated_at'] = datetime.now().isoformat()
             with open('data/projects.json', 'w') as f:
                 json.dump(projects, f)
