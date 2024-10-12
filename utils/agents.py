@@ -76,10 +76,10 @@ def show_agent_details(agent):
     new_purpose = st.text_input("Purpose", agent['purpose'])
     new_pixelart = st.text_input("Pixelart (emoji)", agent['pixelart'])
     
-    if st.button("Shuffle Emoji"):
-        new_pixelart = random.choice(PERSON_EMOJIS)
-        st.session_state.temp_pixelart = new_pixelart
-        st.experimental_rerun()
+    # if st.button("Shuffle Emoji"):
+    #     new_pixelart = random.choice(PERSON_EMOJIS)
+    #     st.session_state.temp_pixelart = new_pixelart
+    #     st.experimental_rerun()
     
     if st.button("Update Agent"):
         if update_agent(agent['id'], new_name, new_description, new_purpose, new_pixelart):
