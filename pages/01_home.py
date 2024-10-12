@@ -20,15 +20,11 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@300;400;600&display=swap');
 
 body {
-    font-family: 'Source Sans Pro', sans-serif;
-    background-color: #f8f9fa;
     color: #2c3e50;
 }
 .stApp {
-    background-color: #f8f9fa;
 }
 .main-title {
-    font-family: 'Playfair Display', serif;
     font-size: 4rem;
     font-weight: 700;
     color: #2c3e50;
@@ -72,13 +68,11 @@ body {
     margin-bottom: 15px;
 }
 h2 {
-    font-family: 'Playfair Display', serif;
     color: #2c3e50;
     font-size: 2.5rem;
     margin-bottom: 30px;
 }
 h3 {
-    font-family: 'Playfair Display', serif;
     color: #34495e;
     font-size: 1.5rem;
 }
