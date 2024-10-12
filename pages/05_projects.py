@@ -1,39 +1,71 @@
 import streamlit as st
-from components.project_card import project_card
-from utils.database import get_projects, add_project
-import streamlit.components.v1 as components
+from utils.projects import get_projects, add_project, ProjectCard, show_project_details, save_projects
 
 st.set_page_config(page_title="Projects", layout="wide")
-st.markdown('<link rel="stylesheet" href="static/style.css">', unsafe_allow_html=True)
 
-st.title("Projects")
-
-# Initialize session state for projects if it doesn't exist
+# Load projects from the database every time the page is loaded
 if 'projects' not in st.session_state:
     st.session_state.projects = get_projects()
 
-# Add Project form
-with st.form("add_project_form"):
-    new_project_name = st.text_input("Project Name")
-    new_project_description = st.text_area("Project Description")
-    submit_button = st.form_submit_button("Add Project")
+if 'show_details' not in st.session_state:
+    st.session_state.show_details = False
+if 'selected_project' not in st.session_state:
+    st.session_state.selected_project = None
 
-if submit_button:
-    if new_project_name and new_project_description:
-        new_project = add_project(new_project_name, new_project_description)
-        st.session_state.projects.append(new_project)
-        st.success(f"Project '{new_project_name}' added successfully!")
-        st.experimental_rerun()
+# Create two columns for the main layout
+main_col, side_panel = st.columns([2, 1])
+
+with main_col:
+    st.title("Projects")
+
+    # Display projects in a grid
+    project_cols = st.columns(3)
+    for i, project in enumerate(st.session_state.projects):
+        with project_cols[i % 3]:
+            if ProjectCard(project):
+                st.session_state.selected_project = project
+                st.session_state.show_details = True
+                st.experimental_rerun()
+
+# Side panel for Add Project form and Edit Project details
+with side_panel:
+    if st.session_state.show_details and st.session_state.selected_project:
+        show_project_details(st.session_state.selected_project)
     else:
-        st.error("Please provide both a name and description for the new project.")
+        st.title("Add New Project")
 
-# Display projects in a grid
-cols = st.columns(3)
-for i, project in enumerate(st.session_state.projects):
-    with cols[i % 3]:
-        project_card(project)
+        new_name = st.text_input("Name", key="new_name")
+        new_description = st.text_area("Description", key="new_description")
+        new_team = st.text_input("Team", key="new_team")
 
-# Refresh projects button
-if st.button("Refresh Projects"):
-    st.session_state.projects = get_projects()
-    st.experimental_rerun()
+        if st.button("Add Project"):
+            if new_name and new_description:
+                new_project = add_project(new_name, new_description)
+                st.session_state.projects.append(new_project)
+                save_projects(st.session_state.projects)
+                st.success(f"Project '{new_name}' added successfully!")
+                # Clear the form by resetting the session state
+                for key in ['new_name', 'new_description', 'new_team']:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.experimental_rerun()
+            else:
+                st.error("Please fill in all required fields.")
+
+# Custom CSS for project card styling
+st.markdown("""
+<style>
+    div.stButton > button:first-child {
+        background-color: #f0f0f0;
+        border: 1px solid #d3d3d3;
+        padding: 10px;
+        border-radius: 10px;
+        text-align: left;
+        width: 100%;
+    }
+    div.stButton > button:hover {
+        border: 1px solid #a0a0a0;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+</style>
+""", unsafe_allow_html=True)
