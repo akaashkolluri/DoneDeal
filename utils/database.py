@@ -1,17 +1,23 @@
 import json
 from datetime import datetime
+import uuid
 
 def get_projects():
-    # This is a placeholder. In a real app, you'd fetch from a database.
     try:
         with open('data/projects.json', 'r') as f:
-            return json.load(f)
+            projects = json.load(f)
+            # Add id to existing projects if they don't have one
+            for project in projects:
+                if 'id' not in project:
+                    project['id'] = str(uuid.uuid4())
+            return projects
     except FileNotFoundError:
         return []
 
 def add_project(name, description):
     projects = get_projects()
     new_project = {
+        'id': str(uuid.uuid4()),  # Generate a unique ID
         'name': name,
         'description': description,
         'status': 'New',
@@ -21,3 +27,22 @@ def add_project(name, description):
     with open('data/projects.json', 'w') as f:
         json.dump(projects, f)
     return new_project
+
+def get_project_by_id(project_id):
+    projects = get_projects()
+    for project in projects:
+        if project['id'] == project_id:
+            return project
+    return None
+
+def update_project(project_id, name, description, status):
+    projects = get_projects()
+    for project in projects:
+        if project['id'] == project_id:
+            project['name'] = name
+            project['description'] = description
+            project['status'] = status
+            with open('data/projects.json', 'w') as f:
+                json.dump(projects, f)
+            return project
+    return None
