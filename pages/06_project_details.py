@@ -2,7 +2,7 @@ import streamlit as st
 import datetime
 from streamlit_extras.stylable_container import stylable_container
 from utils.database import get_project_by_id, update_project, remove_document, get_document_content
-from utils.agents import load_agents  # Assuming you have this function in utils/agents.py
+from utils.agents import load_agents
 import os
 import base64
 from openai import OpenAI
@@ -30,9 +30,32 @@ def generate_contract(project_info):
     """
     
     response = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a legal expert tasked with drafting contracts."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    return response.choices[0].message.content
+
+def generate_agent_feedback(contract, agent):
+    prompt = f"""
+    You are {agent['name']}, a {agent['description']}.
+    
+    Please review the following contract and provide feedback as if you were this agent. 
+    Consider the agent's expertise, background, and any specific information provided about them.
+    
+    Contract:
+    {contract}
+    
+    Provide your feedback, speaking in first person as if you were {agent['name']}:
+    """
+    
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are an AI assistant providing feedback on a contract from the perspective of a specific agent."},
             {"role": "user", "content": prompt}
         ]
     )
@@ -46,6 +69,8 @@ def show_project_details_page():
         st.session_state.selected_agents = []
     if 'previous_versions' not in st.session_state:
         st.session_state.previous_versions = []
+    if 'agent_feedback' not in st.session_state:
+        st.session_state.agent_feedback = {}
 
     # Get the project ID from the session state
     project_id = st.session_state.get('selected_project_id')
@@ -186,11 +211,23 @@ def show_project_details_page():
         # Update selected agents in session state
         st.session_state.selected_agents = selected_agent_names
 
-        # Display feedback for selected agents
+        # Button to generate feedback
+        if st.button("Generate feedback from agents"):
+            for agent in agents:
+                if agent['name'] in selected_agent_names:
+                    feedback = generate_agent_feedback(contract_text, agent)
+                    st.session_state.agent_feedback[agent['name']] = feedback
+            st.success("Feedback generated for selected agents!")
+
+        # Display feedback for selected agents with toggles
         st.subheader("Agent Feedback")
         for agent_name in selected_agent_names:
-            st.write(f"**{agent_name}**")
-            st.write(get_agent_feedback(agent_name))
+            expander = st.expander(f"{agent_name}'s Feedback")
+            with expander:
+                if agent_name in st.session_state.agent_feedback:
+                    st.write(st.session_state.agent_feedback[agent_name])
+                else:
+                    st.write("Feedback not yet generated for this agent.")
 
         # Regenerate contract button
         if st.button("Regenerate Contract with Feedback"):
@@ -227,10 +264,6 @@ def export_contract(contract_text):
         file_name=filename,
         mime="text/plain"
     )
-
-def get_agent_feedback(agent_name):
-    # This is a placeholder function. In a real application, you would fetch the actual feedback for the agent.
-    return f"Feedback for {agent_name}: This is a placeholder feedback. In a real application, this would be actual feedback from the agent."
 
 def regenerate_contract(current_contract, selected_agents):
     # This is a placeholder function. In a real application, you would use the OpenAI API to regenerate the contract based on the feedback.
