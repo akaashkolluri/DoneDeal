@@ -5,6 +5,11 @@ from streamlit_extras.stylable_container import stylable_container
 def show_project_details_page():
     st.title("Project Details")
 
+    if 'selected_agents' not in st.session_state:
+        st.session_state.selected_agents = []
+    if 'previous_versions' not in st.session_state:
+        st.session_state.previous_versions = []
+
     # Create three columns for the panels
     left_col, middle_col, right_col = st.columns([1, 2, 1])
 
@@ -42,7 +47,6 @@ def show_project_details_page():
             "Compliance Officer": "🕵️",
         }
         
-        selected_agents = []
         for agent, icon in agents.items():
             with stylable_container(key=f"agent_{agent}", css_styles="""
                 button {
@@ -65,21 +69,21 @@ def show_project_details_page():
                     background-color: #21c7e8;
                 }
             """):
-                if st.button(f"{icon} {agent}"):
-                    if agent in selected_agents:
-                        selected_agents.remove(agent)
+                if st.button(f"{icon} {agent}", key=f"btn_{agent}"):
+                    if agent in st.session_state.selected_agents:
+                        st.session_state.selected_agents.remove(agent)
                     else:
-                        selected_agents.append(agent)
+                        st.session_state.selected_agents.append(agent)
 
         # Display feedback for selected agents
         st.subheader("Agent Feedback")
-        for agent in selected_agents:
+        for agent in st.session_state.selected_agents:
             st.write(f"**{agent}**")
             st.write(get_agent_feedback(agent))
 
         # Regenerate contract button
         if st.button("Regenerate Contract with Feedback"):
-            new_contract = regenerate_contract(edited_contract, selected_agents)
+            new_contract = regenerate_contract(edited_contract, st.session_state.selected_agents)
             add_to_previous_versions(contract_text)
             st.session_state.current_contract = new_contract
             st.experimental_rerun()
@@ -90,8 +94,18 @@ def load_current_contract():
     return st.session_state.current_contract
 
 def show_previous_versions():
-    st.info("Showing previous versions (placeholder)")
-    # Implement logic to display previous versions
+    if not st.session_state.previous_versions:
+        st.info("No previous versions available.")
+    else:
+        selected_version = st.selectbox(
+            "Select a previous version:",
+            options=range(len(st.session_state.previous_versions)),
+            format_func=lambda x: f"Version {x + 1}"
+        )
+        st.text_area("Previous Version", value=st.session_state.previous_versions[selected_version], height=300)
+        if st.button("Restore This Version"):
+            st.session_state.current_contract = st.session_state.previous_versions[selected_version]
+            st.experimental_rerun()
 
 def export_contract(contract_text):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -119,8 +133,6 @@ def regenerate_contract(current_contract, selected_agents):
     return new_contract
 
 def add_to_previous_versions(contract):
-    if 'previous_versions' not in st.session_state:
-        st.session_state.previous_versions = []
     st.session_state.previous_versions.append(contract)
 
 if __name__ == "__main__":
