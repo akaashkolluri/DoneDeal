@@ -6,14 +6,14 @@
     "team": "123",
     "status": "New",
     "created_at": "2024-10-12T13:19:14.273341",
-    "updated_at": "2024-10-12T13:19:21.502826",
+    "updated_at": "2024-10-12T13:26:06.894511",
     "documents": [
       {
-        "id": "0001584e-0d55-4573-a3d7-f46c330daa27",
-        "name": "projects.json",
-        "path": "data/uploads/0001584e-0d55-4573-a3d7-f46c330daa27.json",
-        "type": "application/json",
-        "size": 262
+        "id": "2160d7d2-6f37-492e-8fc2-1c47f3bf5221",
+        "name": "database.py",
+        "path": "data/uploads/2160d7d2-6f37-492e-8fc2-1c47f3bf5221.py",
+        "type": "text/x-python-script",
+        "size": 2997
       }
     ]
   }

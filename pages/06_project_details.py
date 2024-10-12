@@ -2,8 +2,42 @@ import streamlit as st
 import datetime
 from streamlit_extras.stylable_container import stylable_container
 from utils.database import get_project_by_id, update_project, remove_document, get_document_content
+from utils.agents import load_agents  # Assuming you have this function in utils/agents.py
 import os
 import base64
+from openai import OpenAI
+from dotenv import load_dotenv
+import streamlit.components.v1 as components
+
+# Load environment variables
+load_dotenv()
+
+# Set up OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def generate_contract(project_info):
+    prompt = f"""
+    Generate a legal contract based on the following project information:
+    
+    Project Name: {project_info['name']}
+    Description: {project_info['description']}
+    Team: {project_info['team']}
+    
+    Additional Information:
+    {project_info.get('additional_info', 'No additional information provided.')}
+    
+    Please create a comprehensive legal contract that covers all necessary aspects of this project.
+    """
+    
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a legal expert tasked with drafting contracts."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    return response.choices[0].message.content
 
 def show_project_details_page():
     st.title("Project Details")
@@ -88,11 +122,30 @@ def show_project_details_page():
     with middle_col:
         st.header("Legal Contract")
         
-        # Create an editable text area for the contract
-        edited_contract = st.text_area("Edit Contract", value=contract_text, height=400)
+        # Create a better text editor with more options
+        editor_html = f"""
+        <html>
+            <head>
+                <script src={f"https://cdn.tiny.cloud/1/{os.getenv('TINYMCE_API_KEY')}/tinymce/5/tinymce.min.js"} referrerpolicy="origin"></script>
+                <script>
+                    tinymce.init({{
+                        selector: '#editor',
+                        height: 500,
+                        plugins: 'advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount',
+                        toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+                        content_style: 'body {{ font-family:Helvetica,Arial,sans-serif; font-size:14px }}'
+                    }});
+                </script>
+            </head>
+            <body>
+                <textarea id="editor">{contract_text}</textarea>
+            </body>
+        </html>
+        """
+        components.html(editor_html, height=600)
 
-        # Create two columns for the buttons
-        button_col1, button_col2 = st.columns(2)
+        # Create three columns for the buttons
+        button_col1, button_col2, button_col3 = st.columns(3)
 
         with button_col1:
             if st.button("View Previous Versions"):
@@ -100,57 +153,48 @@ def show_project_details_page():
 
         with button_col2:
             if st.button("Export"):
-                export_contract(edited_contract)
+                export_contract(contract_text)
+
+        with button_col3:
+            if st.button("Generate Contract"):
+                project_info = {
+                    "name": new_name,
+                    "description": new_description,
+                    "team": new_team,
+                    "additional_info": ", ".join([doc['name'] for doc in project.get('documents', [])])
+                }
+                generated_contract = generate_contract(project_info)
+                
+                # Update the current contract with the generated one
+                st.session_state.current_contract = generated_contract
+                add_to_previous_versions(contract_text)
+                st.rerun()
 
     with right_col:
         st.header("Agent Feedback")
         
-        # Agent selection
-        st.subheader("Select Agents")
-        agents = {
-            "Outside Counsel": "👨‍⚖️",
-            "In-House Counsel": "👩‍💼",
-            "Opposing Counsel": "🧑‍⚖️",
-            "Compliance Officer": "🕵️",
-        }
+        # Load agents dynamically
+        agents = load_agents()
         
-        for agent, icon in agents.items():
-            with stylable_container(key=f"agent_{agent}", css_styles="""
-                button {
-                    background-color: #f0f2f6;
-                    border: none;
-                    color: black;
-                    text-align: center;
-                    text-decoration: none;
-                    display: inline-block;
-                    font-size: 16px;
-                    margin: 4px 2px;
-                    cursor: pointer;
-                    border-radius: 12px;
-                    padding: 10px 24px;
-                }
-                button:hover {
-                    background-color: #dfe3e8;
-                }
-                button:focus {
-                    background-color: #21c7e8;
-                }
-            """):
-                if st.button(f"{icon} {agent}", key=f"btn_{agent}"):
-                    if agent in st.session_state.selected_agents:
-                        st.session_state.selected_agents.remove(agent)
-                    else:
-                        st.session_state.selected_agents.append(agent)
+        # Agent selection using multiselect
+        selected_agent_names = st.multiselect(
+            "Select Agents",
+            options=[agent['name'] for agent in agents],
+            default=st.session_state.selected_agents
+        )
+        
+        # Update selected agents in session state
+        st.session_state.selected_agents = selected_agent_names
 
         # Display feedback for selected agents
         st.subheader("Agent Feedback")
-        for agent in st.session_state.selected_agents:
-            st.write(f"**{agent}**")
-            st.write(get_agent_feedback(agent))
+        for agent_name in selected_agent_names:
+            st.write(f"**{agent_name}**")
+            st.write(get_agent_feedback(agent_name))
 
         # Regenerate contract button
         if st.button("Regenerate Contract with Feedback"):
-            new_contract = regenerate_contract(edited_contract, st.session_state.selected_agents)
+            new_contract = regenerate_contract(contract_text, selected_agent_names)
             add_to_previous_versions(contract_text)
             st.session_state.current_contract = new_contract
             st.rerun()
@@ -184,18 +228,12 @@ def export_contract(contract_text):
         mime="text/plain"
     )
 
-def get_agent_feedback(agent):
-    # Dummy feedback for each agent
-    feedback = {
-        "Outside Counsel": "Suggest adding a clause about intellectual property rights.",
-        "In-House Counsel": "The liability section needs to be more specific.",
-        "Opposing Counsel": "The termination conditions are too restrictive.",
-        "Compliance Officer": "Ensure GDPR compliance in the data handling section."
-    }
-    return feedback.get(agent, "No feedback available.")
+def get_agent_feedback(agent_name):
+    # This is a placeholder function. In a real application, you would fetch the actual feedback for the agent.
+    return f"Feedback for {agent_name}: This is a placeholder feedback. In a real application, this would be actual feedback from the agent."
 
 def regenerate_contract(current_contract, selected_agents):
-    # Dummy logic to regenerate the contract
+    # This is a placeholder function. In a real application, you would use the OpenAI API to regenerate the contract based on the feedback.
     new_contract = current_contract + "\n\nUpdated based on feedback from: " + ", ".join(selected_agents)
     return new_contract
 
