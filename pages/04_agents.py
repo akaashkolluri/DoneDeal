@@ -16,7 +16,6 @@ main_col, side_panel = st.columns([2, 1])
 
 with main_col:
     st.title("Agents")
-
     # Display agents in a grid
     agent_cols = st.columns(3)
     for i, agent in enumerate(st.session_state.agents):
@@ -37,15 +36,23 @@ with side_panel:
         new_description = st.text_area("Description", key="new_description")
         new_purpose = st.text_input("Purpose", key="new_purpose")
         new_past_work = st.file_uploader("Past Work", accept_multiple_files=True, key="new_past_work")
-        
+        # Dropdown for Allegiance
+        allegiance_options = ["your side", "opposing side", "neutral"]
+        new_allegiance = st.selectbox("Allegiance", allegiance_options, key="new_allegiance")
+
+        # Dropdown for Allegiance
+        agent_options = ["in-house counsel", "opposing counsel", "corporate plaintiff", "individual plaintiff", "judge"]
+        new_type = st.selectbox("Agent Type", agent_options, key="new_type")
+
+
         if st.button("Add Agent"):
             if new_name and new_description and new_purpose:
-                new_agent = add_agent(new_name, new_description, new_purpose, new_past_work)
+                new_agent = add_agent(new_name, new_description, new_purpose, new_past_work, new_allegiance, new_type)
                 st.session_state.agents.append(new_agent)
                 save_agents(st.session_state.agents)
                 st.success(f"Agent '{new_name}' added successfully!")
                 # Clear the form by resetting the session state
-                for key in ['new_name', 'new_description', 'new_purpose', 'new_past_work']:
+                for key in ['new_name', 'new_description', 'new_purpose', 'new_past_work', 'new_allegiance', 'new_type']:
                     if key in st.session_state:
                         del st.session_state[key]
                 st.rerun()

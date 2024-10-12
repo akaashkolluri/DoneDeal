@@ -25,12 +25,14 @@ def save_agents(agents):
     with open('data/agents.json', 'w') as f:
         json.dump(agents, f)
 
-def add_agent(name, description, purpose, past_work):
+def add_agent(name, description, purpose, past_work, allegiance, agent_type):
     new_agent = {
         'id': str(uuid.uuid4()),
         'name': name,
         'description': description,
         'purpose': purpose,
+        'allegiance': allegiance, 
+        'type': agent_type,
         'pixelart': random.choice(PERSON_EMOJIS),
         'past_work': [{'filename': file.name, 'content': file.getvalue().decode()} for file in past_work],
         'created_at': datetime.now().isoformat()
@@ -40,14 +42,16 @@ def add_agent(name, description, purpose, past_work):
     save_agents(agents)
     return new_agent
 
-def update_agent(agent_id, name, description, purpose, pixelart):
+def update_agent(agent_id, name, description, purpose, pixelart, allegiance, agent_type):
     agents = load_agents()
     for agent in agents:
         if agent['id'] == agent_id:
             agent['name'] = name
             agent['description'] = description
             agent['purpose'] = purpose
+            agent['allegiance'] = allegiance  
             agent['pixelart'] = pixelart
+            agent['type'] = agent_type
             save_agents(agents)
             return True
     return False
@@ -76,13 +80,21 @@ def show_agent_details(agent):
     new_purpose = st.text_input("Purpose", agent['purpose'])
     new_pixelart = st.text_input("Pixelart (emoji)", agent['pixelart'])
     
+     # Dropdown for Allegiance
+    allegiance_options = ["your side", "opposing side", "neutral"]
+    new_allegiance = st.selectbox("Allegiance", allegiance_options, index=allegiance_options.index(agent['allegiance']))
+    
+    # Dropdown for Allegiance
+    agent_options = ["in-house counsel", "opposing counsel", "corporate plaintiff", "individual plaintiff", "judge"]
+    new_type = st.selectbox("Agent Type", agent_options, index=agent_options.index(agent['type']))
+
     # if st.button("Shuffle Emoji"):
     #     new_pixelart = random.choice(PERSON_EMOJIS)
     #     st.session_state.temp_pixelart = new_pixelart
     #     st.experimental_rerun()
     
     if st.button("Update Agent"):
-        if update_agent(agent['id'], new_name, new_description, new_purpose, new_pixelart):
+        if update_agent(agent['id'], new_name, new_description, new_purpose, new_pixelart, new_allegiance, new_type):
             st.success("Agent updated successfully!")
             st.rerun()
         else:
