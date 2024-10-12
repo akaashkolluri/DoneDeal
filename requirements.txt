@@ -5,3 +5,4 @@ streamlit-extras==0.5.0
 openai==1.35.3
 streamlit_lottie==0.0.5
 python-dotenv
+fpdf==1.7.2
