@@ -9,18 +9,16 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+Pro:wght@300;400;600&display=swap');
 
 body {
-    font-family: 'Source Sans Pro', sans-serif;
     background-color: #f8f9fa;
-    color: #2c3e50;
+
 }
 .stApp {
-    background-color: #f8f9fa;
+
 }
 .main-title {
-    font-family: 'Playfair Display', serif;
     font-size: 3rem;
     font-weight: 700;
-    color: #2c3e50;
+    
     margin-bottom: 20px;
 }
 .subtitle {
@@ -77,7 +75,7 @@ body {
 """, unsafe_allow_html=True)
 
 # Main content
-st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+# st.markdown("<div class='login-container'>", unsafe_allow_html=True)
 st.markdown("<h1 class='main-title'>Done Deal</h1>", unsafe_allow_html=True)
 st.markdown("<p class='subtitle'>Log in to your account</p>", unsafe_allow_html=True)
 

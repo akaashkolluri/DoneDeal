@@ -14,8 +14,9 @@ load_dotenv()
 
 # Set up OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+TINYMCE_API_KEY = os.getenv("TINYMCE_API_KEY")
 
-def generate_contract(project_info):
+def generate_contract(project_info, agent_feedback=None):
     prompt = f"""
     Generate a legal contract based on the following project information:
     
@@ -29,6 +30,11 @@ def generate_contract(project_info):
     Please create a comprehensive legal contract that covers all necessary aspects of this project.
     """
     
+    if agent_feedback:
+        prompt += "\n\nConsider the following feedback from agents when creating the contract:\n"
+        for agent, feedback in agent_feedback.items():
+            prompt += f"\n{agent}: {feedback}\n"
+    
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -39,17 +45,22 @@ def generate_contract(project_info):
     
     return response.choices[0].message.content
 
-def generate_agent_feedback(contract, agent):
+def generate_agent_feedback(contract, agent, specific_instructions, section_to_edit):
     prompt = f"""
     You are {agent['name']}, a {agent['description']}.
     
     Please review the following contract and provide feedback as if you were this agent. 
     Consider the agent's expertise, background, and any specific information provided about them.
     
+    Specific Instructions: {specific_instructions}
+    
+    Section to Edit: {section_to_edit}
+    
     Contract:
     {contract}
     
-    Provide your feedback, speaking in first person as if you were {agent['name']}:
+    Provide your feedback, speaking in first person as if you were {agent['name']}. 
+    If a specific section to edit was provided, focus your feedback on that section.
     """
     
     response = client.chat.completions.create(
@@ -63,7 +74,7 @@ def generate_agent_feedback(contract, agent):
     return response.choices[0].message.content
 
 def show_project_details_page():
-    st.title("Project Details")
+    # st.title("Project Details")
 
     if 'selected_agents' not in st.session_state:
         st.session_state.selected_agents = []
@@ -71,6 +82,8 @@ def show_project_details_page():
         st.session_state.previous_versions = []
     if 'agent_feedback' not in st.session_state:
         st.session_state.agent_feedback = {}
+    if 'current_contract' not in st.session_state:
+        st.session_state.current_contract = "This is the current version of the legal contract."
 
     # Get the project ID from the session state
     project_id = st.session_state.get('selected_project_id')
@@ -90,8 +103,8 @@ def show_project_details_page():
             st.switch_page("pages/05_projects.py")
         return
 
-    # Create three columns for the panels
-    left_col, middle_col, right_col = st.columns([1, 2, 1])
+    # Create four columns for the panels
+    left_col, middle_left_col, middle_right_col, right_col = st.columns([2, 4, 2, 2])
 
     with left_col:
         st.header("Project Information")
@@ -143,27 +156,31 @@ def show_project_details_page():
         if st.button("Back to Projects"):
             st.switch_page("pages/05_projects.py")
 
-    contract_text = load_current_contract()
-    with middle_col:
+    with middle_left_col:
         st.header("Legal Contract")
         
         # Create a better text editor with more options
         editor_html = f"""
         <html>
             <head>
-                <script src={f"https://cdn.tiny.cloud/1/{os.getenv('TINYMCE_API_KEY')}/tinymce/5/tinymce.min.js"} referrerpolicy="origin"></script>
+                <script src={f"https://cdn.tiny.cloud/1/{TINYMCE_API_KEY}/tinymce/5/tinymce.min.js"} referrerpolicy="origin"></script>
                 <script>
                     tinymce.init({{
                         selector: '#editor',
                         height: 500,
                         plugins: 'advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount',
                         toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
-                        content_style: 'body {{ font-family:Helvetica,Arial,sans-serif; font-size:14px }}'
+                        content_style: 'body {{ font-family:Helvetica,Arial,sans-serif; font-size:14px }}',
+                        setup: function(editor) {{
+                            editor.on('change', function() {{
+                                editor.save();
+                            }});
+                        }}
                     }});
                 </script>
             </head>
             <body>
-                <textarea id="editor">{contract_text}</textarea>
+                <textarea id="editor">{st.session_state.current_contract}</textarea>
             </body>
         </html>
         """
@@ -178,7 +195,7 @@ def show_project_details_page():
 
         with button_col2:
             if st.button("Export"):
-                export_contract(contract_text)
+                export_contract(st.session_state.current_contract)
 
         with button_col3:
             if st.button("Generate Contract"):
@@ -192,11 +209,15 @@ def show_project_details_page():
                 
                 # Update the current contract with the generated one
                 st.session_state.current_contract = generated_contract
-                add_to_previous_versions(contract_text)
+                add_to_previous_versions(st.session_state.current_contract)
                 st.rerun()
 
-    with right_col:
-        st.header("Agent Feedback")
+    with middle_right_col:
+        st.header("Agent Selection")
+        
+        # Input for specific instructions and desired section to edit
+        specific_instructions = st.text_area("Specific Instructions", "")
+        section_to_edit = st.text_area("Desired Section to Edit", "")
         
         # Load agents dynamically
         agents = load_agents()
@@ -213,14 +234,31 @@ def show_project_details_page():
 
         # Button to generate feedback
         if st.button("Generate feedback from agents"):
+            st.session_state.agent_feedback = {}  # Clear previous feedback
             for agent in agents:
                 if agent['name'] in selected_agent_names:
-                    feedback = generate_agent_feedback(contract_text, agent)
+                    feedback = generate_agent_feedback(st.session_state.current_contract, agent, specific_instructions, section_to_edit)
                     st.session_state.agent_feedback[agent['name']] = feedback
             st.success("Feedback generated for selected agents!")
+            st.rerun()
+
+        # Regenerate contract button
+        if st.button("Regenerate Contract with Feedback"):
+            project_info = {
+                "name": new_name,
+                "description": new_description,
+                "team": new_team,
+                "additional_info": ", ".join([doc['name'] for doc in project.get('documents', [])])
+            }
+            new_contract = generate_contract(project_info, st.session_state.agent_feedback)
+            add_to_previous_versions(st.session_state.current_contract)
+            st.session_state.current_contract = new_contract
+            st.rerun()
+
+    with right_col:
+        st.header("Agent Feedback")
 
         # Display feedback for selected agents with toggles
-        st.subheader("Agent Feedback")
         for agent_name in selected_agent_names:
             expander = st.expander(f"{agent_name}'s Feedback")
             with expander:
@@ -229,18 +267,7 @@ def show_project_details_page():
                 else:
                     st.write("Feedback not yet generated for this agent.")
 
-        # Regenerate contract button
-        if st.button("Regenerate Contract with Feedback"):
-            new_contract = regenerate_contract(contract_text, selected_agent_names)
-            add_to_previous_versions(contract_text)
-            st.session_state.current_contract = new_contract
-            st.rerun()
-
-def load_current_contract():
-    if 'current_contract' not in st.session_state:
-        st.session_state.current_contract = "This is the current version of the legal contract."
-    return st.session_state.current_contract
-
+# ... (rest of the code remains unchanged)
 def show_previous_versions():
     if not st.session_state.previous_versions:
         st.info("No previous versions available.")
@@ -264,11 +291,6 @@ def export_contract(contract_text):
         file_name=filename,
         mime="text/plain"
     )
-
-def regenerate_contract(current_contract, selected_agents):
-    # This is a placeholder function. In a real application, you would use the OpenAI API to regenerate the contract based on the feedback.
-    new_contract = current_contract + "\n\nUpdated based on feedback from: " + ", ".join(selected_agents)
-    return new_contract
 
 def add_to_previous_versions(contract):
     st.session_state.previous_versions.append(contract)
