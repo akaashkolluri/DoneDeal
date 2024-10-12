@@ -35,5 +35,6 @@ else:
                 else:
                     st.error("Failed to update project")
 
-        if st.button("Back to Projects"):
+        # Add "Back to All Projects" button
+        if st.button("Back to All Projects"):
             st.switch_page("pages/05_projects.py")
