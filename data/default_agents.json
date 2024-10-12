@@ -1,0 +1,26 @@
+[
+  {
+    "id": "agent1",
+    "name": "Alice",
+    "description": "Experienced real estate agent specializing in residential properties.",
+    "pixelart": "👩‍💼",
+    "purpose": "Residential sales",
+    "past_work": []
+  },
+  {
+    "id": "agent2",
+    "name": "Bob",
+    "description": "Commercial property expert with a focus on office spaces.",
+    "pixelart": "👨‍💼",
+    "purpose": "Commercial leasing",
+    "past_work": []
+  },
+  {
+    "id": "agent3",
+    "name": "Charlie",
+    "description": "Luxury home specialist with a keen eye for high-end properties.",
+    "pixelart": "🕴️",
+    "purpose": "Luxury sales",
+    "past_work": []
+  }
+]
