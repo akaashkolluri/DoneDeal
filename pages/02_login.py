@@ -1,7 +1,18 @@
 import streamlit as st
 from utils.auth import login_user
 
-st.set_page_config(layout="wide", page_title="Done Deal - Login")
+st.set_page_config(layout="wide", page_title="Done Deal - AI-Powered Legal Contracts", initial_sidebar_state="collapsed")
+# Hide the sidebar
+st.markdown(
+    """
+<style>
+    [data-testid="collapsedControl"] {
+        display: none
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 # Custom CSS for styling
 st.markdown("""

@@ -1,7 +1,18 @@
 import streamlit as st
 from utils.agents import load_agents, add_agent, AgentCard, show_agent_details, save_agents
 
-st.set_page_config(page_title="Agents", layout="wide")
+st.set_page_config(layout="wide", page_title="Done Deal - AI-Powered Legal Contracts", initial_sidebar_state="collapsed")
+# Hide the sidebar
+st.markdown(
+    """
+<style>
+    [data-testid="collapsedControl"] {
+        display: none
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 # Load agents from the database every time the page is loaded
 st.session_state.agents = load_agents()
