@@ -1,16 +1,61 @@
 import streamlit as st
 import datetime
 from streamlit_extras.stylable_container import stylable_container
+from utils.database import get_project_by_id, update_project
 
 def show_project_details_page():
     st.title("Project Details")
+
+    # Debug: Print query params
+    st.write("Current query params:", st.query_params)
+
+    # Get the project ID from the query parameters
+    project_id = st.query_params.get("id")
+
+    # if project_id is None:
+    #     st.error("No project ID provided.")
+    #     st.write("Please go back to the projects page and select a project.")
+    #     return
+
+    # # Fetch the project details
+    # project = get_project_by_id(project_id)
+    # if project is None:
+    #     st.error(f"Project with ID {project_id} not found.")
+    #     return
 
     # Create three columns for the panels
     left_col, middle_col, right_col = st.columns([1, 2, 1])
 
     with left_col:
-        st.header("Left Panel")
-        st.write("Content for the left panel goes here.")
+        st.header("Project Information")
+        
+        # Project name
+        new_name = st.text_input("Project Name", value=project['name'])
+        
+        # Project description
+        new_description = st.text_area("Project Description", value=project['description'])
+        
+        # Project status
+        new_status = st.selectbox("Project Status", 
+                                  options=["New", "In Progress", "Completed", "On Hold"],
+                                  index=["New", "In Progress", "Completed", "On Hold"].index(project['status']))
+        
+        # File uploader for project assets
+        uploaded_files = st.file_uploader("Upload Project Assets", accept_multiple_files=True)
+        
+        if uploaded_files:
+            st.write("Uploaded files:")
+            for file in uploaded_files:
+                st.write(f"- {file.name}")
+        
+        # Save changes button
+        if st.button("Save Changes"):
+            updated_project = update_project(project_id, new_name, new_description, new_status)
+            if updated_project:
+                st.success("Project updated successfully!")
+                st.rerun()
+            else:
+                st.error("Failed to update project.")
 
     contract_text = load_current_contract()
     with middle_col:
@@ -82,7 +127,7 @@ def show_project_details_page():
             new_contract = regenerate_contract(edited_contract, selected_agents)
             add_to_previous_versions(contract_text)
             st.session_state.current_contract = new_contract
-            st.experimental_rerun()
+            st.rerun()
 
 def load_current_contract():
     if 'current_contract' not in st.session_state:

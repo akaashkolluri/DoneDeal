@@ -21,7 +21,8 @@ def add_project(name, description):
         'name': name,
         'description': description,
         'status': 'New',
-        'created_at': datetime.now().isoformat()
+        'created_at': datetime.now().isoformat(),
+        'updated_at': datetime.now().isoformat()
     }
     projects.append(new_project)
     with open('data/projects.json', 'w') as f:
@@ -42,6 +43,7 @@ def update_project(project_id, name, description, status):
             project['name'] = name
             project['description'] = description
             project['status'] = status
+            project['updated_at'] = datetime.now().isoformat()
             with open('data/projects.json', 'w') as f:
                 json.dump(projects, f)
             return project

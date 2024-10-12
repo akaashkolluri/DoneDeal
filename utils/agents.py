@@ -84,7 +84,7 @@ def show_agent_details(agent):
     if st.button("Update Agent"):
         if update_agent(agent['id'], new_name, new_description, new_purpose, new_pixelart):
             st.success("Agent updated successfully!")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Failed to update agent.")
     
@@ -101,11 +101,11 @@ def show_agent_details(agent):
             st.session_state.agents = load_agents()
             st.session_state.selected_agent = None
             st.session_state.show_details = False
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Failed to delete agent.")
     
     if st.button("Back to Add Agent"):
         st.session_state.selected_agent = None
         st.session_state.show_details = False
-        st.experimental_rerun()
+        st.rerun()

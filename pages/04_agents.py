@@ -24,7 +24,7 @@ with main_col:
             if AgentCard(agent):
                 st.session_state.selected_agent = agent
                 st.session_state.show_details = True
-                st.experimental_rerun()
+                st.rerun()
 
 # Side panel for Add Agent form and Edit Agent details
 with side_panel:
@@ -48,7 +48,7 @@ with side_panel:
                 for key in ['new_name', 'new_description', 'new_purpose', 'new_past_work']:
                     if key in st.session_state:
                         del st.session_state[key]
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Please fill in all required fields.")
 
