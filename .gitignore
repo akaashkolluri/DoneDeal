@@ -2,8 +2,5 @@
 /components/__pycache__
 /utils/__pycache__
 .env
-<<<<<<< HEAD
 /data
-=======
 /data/uploads/*
->>>>>>> dbf237df70cd94fbf3fbb47a06ac898601ea5b5d
