@@ -1,5 +1,4 @@
 import streamlit as st
-import datetime
 from streamlit_extras.stylable_container import stylable_container
 from utils.database import get_project_by_id, update_project, remove_document, get_document_content
 from utils.agents import load_agents
@@ -9,7 +8,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import streamlit.components.v1 as components
 from fpdf import FPDF
-from streamlit_extras.app_logo import add_logo
+import time
 
 # Load environment variables
 load_dotenv()
@@ -128,7 +127,13 @@ def show_project_details_page():
         return
 
     # Create four columns for the panels
+    simulation_col = st.columns(1)[0]
     left_col, middle_left_col, middle_right_col, right_col = st.columns([2, 4, 2, 2])
+    
+
+    with simulation_col:
+        if st.button("Simulate Arguments"):
+            simulate_arguments()
 
     with left_col:
         st.header("Project Information")
@@ -232,9 +237,11 @@ def show_project_details_page():
         #     if st.button("View Previous Versions"):
         #         show_previous_versions()
 
+
         # with button_col2:
-        #     if st.button("Export as Text"):
-        #         export_contract(st.session_state.current_contract)
+        #     if st.button("Simulate Arguments"):
+        #         simulate_arguments()
+
 
         with button_col3:
             if st.button("Export as PDF"):
@@ -255,6 +262,7 @@ def show_project_details_page():
                     "additional_info": ", ".join([doc['name'] for doc in project.get('documents', [])])
                 }
                 
+                changes_placeholder.empty()
                 loading_placeholder.warning("Contract Writing Agent is currently considering your documents...")
                 generated_response = generate_contract(project_info)
                 generated_contract, summary = parse_contract_and_summary(generated_response)
@@ -349,6 +357,55 @@ def show_previous_versions():
         if st.button("Restore This Version"):
             st.session_state.current_contract = st.session_state.previous_versions[selected_version]
             st.rerun()
+
+
+def simulate_arguments():
+    steps = [
+        "Generating initial contract",
+        "Getting agent feedback (Round 1)",
+        "Regenerating contract (Round 1)",
+        "Getting agent feedback (Round 2)",
+        "Regenerating contract (Round 2)",
+        "Getting agent feedback (Round 3)",
+        "Regenerating contract (Round 3)"
+    ]
+
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+
+    for i, step in enumerate(steps):
+        status_text.text(f"Step {i+1}/{len(steps)}: {step}")
+        progress_bar.progress((i + 1) / len(steps))
+
+        if "Generating" in step or "Regenerating" in step:
+            project_info = {
+                "name": st.session_state.get('project_name', ''),
+                "description": st.session_state.get('project_description', ''),
+                "team": st.session_state.get('project_team', ''),
+                "additional_info": ", ".join([doc['name'] for doc in st.session_state.get('project_documents', [])])
+            }
+            with st.spinner(f"Step {i+1}/{len(steps)}: {step}..."):
+                generated_response = generate_contract(project_info, st.session_state.get('agent_feedback', {}))
+                new_contract, summary = parse_contract_and_summary(generated_response)
+                add_to_previous_versions(st.session_state.current_contract)
+                st.session_state.current_contract = new_contract
+                st.session_state.contract_changes = summary
+        elif "Getting agent feedback" in step:
+            agents = load_agents()
+            selected_agent_names = st.session_state.get('selected_agents', [])
+            st.session_state.agent_feedback = {}
+            with st.spinner(f"Step {i+1}/{len(steps)}: {step}..."):
+                for agent in agents:
+                    if agent['name'] in selected_agent_names:
+                        feedback = generate_agent_feedback(st.session_state.current_contract, agent, "", "")
+                        st.session_state.agent_feedback[agent['name']] = feedback
+        
+        # Add a small delay to allow for UI updates
+        time.sleep(0.5)
+
+    status_text.text("Simulation complete!")
+    progress_bar.progress(1.0)
+    st.success("Simulation completed successfully!")
 
 def export_contract(contract_text):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
