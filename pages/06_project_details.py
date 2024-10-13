@@ -80,6 +80,8 @@ def generate_agent_feedback(contract, agent, specific_instructions, section_to_e
     
     Provide your feedback, speaking in first person as if you were {agent['name']}. 
     If a specific section to edit was provided, focus your feedback on that section.
+
+    Keep feedback to under 150 words.
     """
     
     response = client.chat.completions.create(
@@ -109,7 +111,7 @@ def show_project_details_page():
     if 'agent_feedback' not in st.session_state:
         st.session_state.agent_feedback = {}
     if 'current_contract' not in st.session_state:
-        st.session_state.current_contract = "This is the current version of the legal contract."
+        st.session_state.current_contract = "Draft your contract here"
     if 'contract_changes' not in st.session_state:
         st.session_state.contract_changes = None
 
