@@ -5,16 +5,16 @@ import requests
 
 st.set_page_config(layout="wide", page_title="Done Deal - AI-Powered Legal Contracts", initial_sidebar_state="collapsed")
 # Hide the sidebar
-st.markdown(
-    """
-<style>
-    [data-testid="collapsedControl"] {
-        display: none
-    }
-</style>
-""",
-    unsafe_allow_html=True,
-)
+# st.markdown(
+#     """
+# <style>
+#     [data-testid="collapsedControl"] {
+#         display: none
+#     }
+# </style>
+# """,
+#     unsafe_allow_html=True,
+# )
 
 
 def load_lottieurl(url: str):
