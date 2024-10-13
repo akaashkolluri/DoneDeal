@@ -96,7 +96,7 @@ password = st.text_input("Password", type="password")
 if st.button("Log In"):
     if login_user(username, password):
         st.success("Logged in successfully!")
-        st.switch_page("pages/03_dashboard.py")
+        st.switch_page("pages/04_agents.py")
     else:
         st.error("Invalid username or password")
 

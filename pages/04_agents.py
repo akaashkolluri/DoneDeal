@@ -70,6 +70,9 @@ with main_col:
 
 # Side panel for Add Agent form and Edit Agent details
 with side_panel:
+    if st.button('All projects'):
+        st.switch_page("pages/05_projects.py")
+
     if st.session_state.show_details and st.session_state.selected_agent:
         show_agent_details(st.session_state.selected_agent)
     else:

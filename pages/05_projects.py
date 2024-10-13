@@ -1,8 +1,18 @@
 import streamlit as st
 from utils.projects import get_projects, add_project, ProjectCard, show_project_details, save_projects
 
-st.set_page_config(page_title="Projects", layout="wide")
-
+st.set_page_config(layout="wide", page_title="Done Deal - AI-Powered Legal Contracts", initial_sidebar_state="collapsed")
+# Hide the sidebar
+st.markdown(
+    """
+<style>
+    [data-testid="collapsedControl"] {
+        display: none
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
 # Load projects from the database every time the page is loaded
 if 'projects' not in st.session_state:
     st.session_state.projects = get_projects()
@@ -28,6 +38,8 @@ with main_col:
 
 # Side panel for Add Project form and Edit Project details
 with side_panel:
+    if st.button('All Agents'):
+        st.switch_page("pages/04_agents.py")
     if st.session_state.show_details and st.session_state.selected_project:
         show_project_details(st.session_state.selected_project)
     else:
