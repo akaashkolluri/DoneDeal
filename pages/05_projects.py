@@ -13,6 +13,22 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+
+# st.markdown(
+#     """
+#     <div style="display: flex; justify-content: flex-start; padding: 10px; background-color: white;">
+#         <a href="agents" target="_self" style="text-decoration: none; color: #262730; font-weight: bold; margin-right: 20px;">Agents</a>
+#         <a href="projects" target="_self" style="text-decoration: none; color: #262730; font-weight: bold;">Projects</a>
+#     </div>
+#     <style>
+#         div a:hover {
+#             color: blue !important;
+#             text-decoration: underline !important;
+#         }
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
 # Load projects from the database every time the page is loaded
 if 'projects' not in st.session_state:
     st.session_state.projects = get_projects()
@@ -26,20 +42,21 @@ if 'selected_project' not in st.session_state:
 main_col, side_panel = st.columns([2, 1])
 
 with main_col:
+    # if st.button('All Agents'):
+    #     st.switch_page("pages/04_agents.py")
     st.title("Projects")
 
     # Display projects in a grid
     project_cols = st.columns(3)
     for i, project in enumerate(st.session_state.projects):
         with project_cols[i % 3]:
-            if st.button(f"{project['name']}\n{project['team']}\n{project['description'][:20]}...", key=f"project_{project['id']}"):
+            if st.button(f"{project['name']}\n{project['team']}\n{project['description'][:100]}...", key=f"project_{project['id']}"):
                 st.session_state.selected_project_id = project['id']
                 st.switch_page("pages/06_project_details.py")
 
 # Side panel for Add Project form and Edit Project details
 with side_panel:
-    if st.button('All Agents'):
-        st.switch_page("pages/04_agents.py")
+    
     if st.session_state.show_details and st.session_state.selected_project:
         show_project_details(st.session_state.selected_project)
     else:

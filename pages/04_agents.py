@@ -3,16 +3,34 @@ from utils.agents import load_agents, add_agent, AgentCard, show_agent_details, 
 
 st.set_page_config(layout="wide", page_title="Done Deal - AI-Powered Legal Contracts", initial_sidebar_state="collapsed")
 # Hide the sidebar
-st.markdown(
-    """
-<style>
-    [data-testid="collapsedControl"] {
-        display: none
-    }
-</style>
-""",
-    unsafe_allow_html=True,
-)
+# st.markdown(
+#     """
+# <style>
+#     [data-testid="collapsedControl"] {
+#         display: none
+#     }
+# </style>
+# """,
+#     unsafe_allow_html=True,
+# )
+
+# st.markdown(
+#     """
+#     <div style="display: flex; justify-content: flex-start; padding: 10px; background-color: white;">
+#         <a href="agents" target="_self" style="text-decoration: none; color: #262730; font-weight: bold; margin-right: 20px;">Agents</a>
+#         <a href="projects" target="_self" style="text-decoration: none; color: #262730; font-weight: bold;">Projects</a>
+#     </div>
+#     <style>
+#         div a:hover {
+#             color: blue !important;
+#             text-decoration: underline !important;
+#         }
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
+
+
 
 # Load agents from the database every time the page is loaded
 st.session_state.agents = load_agents()
@@ -70,8 +88,8 @@ with main_col:
 
 # Side panel for Add Agent form and Edit Agent details
 with side_panel:
-    if st.button('All projects'):
-        st.switch_page("pages/05_projects.py")
+    # if st.button('All projects'):
+    #     st.switch_page("pages/05_projects.py")
 
     if st.session_state.show_details and st.session_state.selected_agent:
         show_agent_details(st.session_state.selected_agent)

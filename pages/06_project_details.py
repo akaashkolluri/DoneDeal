@@ -18,6 +18,10 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 TINYMCE_API_KEY = os.getenv("TINYMCE_API_KEY")
 
+
+
+
+
 def generate_contract(project_info, agent_feedback=None):
     prompt = f"""
     Generate a legal contract based on the following project information:
